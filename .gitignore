@@ -45,3 +45,5 @@ build/
 .vscode/
 # JDT-specific (Eclipse Java Development Tools)
 .classpath
+
+application.properties
