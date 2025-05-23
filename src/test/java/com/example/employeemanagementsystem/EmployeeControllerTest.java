@@ -259,4 +259,74 @@ class EmployeeControllerTest {
         verify(roleService, times(1)).getRoleByTitle("NonExistentRole");
         verify(employeeService, never()).addEmployee(any(EmployeeEntity.class));
     }
+
+    @Test
+    void testUpdateEmployeeEmployeeNotFound() {
+        // Arrange
+        int employeeId = 999;
+        EmployeeRequestDTO requestDTO = new EmployeeRequestDTO(
+            "Aditya",
+            "Shanbhog",
+            "email@gmail.com",
+            "123456789",
+            "department",
+            "role"
+        );
+
+        when(employeeService.getEmployeeById(employeeId)).thenReturn(null);
+        ResponseEntity<?> response = employeeController.updateEmployee(employeeId, requestDTO);
+        assertEquals(400, response.getStatusCodeValue());
+        ErrorResponseDTO responseBody = (ErrorResponseDTO) response.getBody();
+        assertEquals("Employee with id 999 not found", responseBody.getMessage());
+    }
+
+    @Test
+    void testUpdateEmployeeDepartmentNotFound() {
+        // Arrange
+        int employeeId = 1;
+        EmployeeRequestDTO requestDTO = new EmployeeRequestDTO(
+                "Aditya",
+                "Shanbhog",
+                "adityashanbhog@gmail.com",
+                "123456789",
+                "NonExistentDepartment",
+                "Developer"
+        );
+
+        // Create existing employee
+        DepartmentEntity oldDepartment = new DepartmentEntity();
+        oldDepartment.setDepartmentId(1);
+        oldDepartment.setName("IT");
+
+        RoleEntity oldRole = new RoleEntity();
+        oldRole.setRoleId(1);
+        oldRole.setTitle("Developer");
+
+        EmployeeEntity existingEmployee = new EmployeeEntity();
+        existingEmployee.setEmployeeId(employeeId);
+        existingEmployee.setFirstName("Old Name");
+        existingEmployee.setLastName("Old Last");
+        existingEmployee.setEmail("old@email.com");
+        existingEmployee.setPhone("987654321");
+        existingEmployee.setDepartment(oldDepartment);
+        existingEmployee.setRole(oldRole);
+
+        // Mock service calls
+        when(employeeService.getEmployeeById(employeeId)).thenReturn(existingEmployee);
+        when(departmentService.getDepartmentByName("NonExistentDepartment")).thenReturn(null);
+
+        // Act
+        ResponseEntity<?> response = employeeController.updateEmployee(employeeId, requestDTO);
+
+        // Assert
+        assertEquals(400, response.getStatusCodeValue());
+        ErrorResponseDTO responseBody = (ErrorResponseDTO) response.getBody();
+        assertEquals("Department with name `NonExistentDepartment` not found", responseBody.getMessage());
+
+        // Verify service calls
+        verify(employeeService, times(1)).getEmployeeById(employeeId);
+        verify(departmentService, times(1)).getDepartmentByName("NonExistentDepartment");
+        verify(roleService, never()).getRoleByTitle(anyString());
+        verify(employeeService, never()).updateEmployee(any(EmployeeEntity.class));
+    }
 }

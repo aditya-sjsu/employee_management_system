@@ -71,8 +71,7 @@ public class EmployeeController {
         }
 
         RoleEntity role = this.roleService.getRoleByTitle(employeeRequestDTO.getRoleName());
-        if (role == null)
-        {
+        if (role == null) {
             return ResponseEntity.badRequest().body(new ErrorResponseDTO(new Date(), "Role with name `" + employeeRequestDTO.getRoleName() + "` not found"));
         }
         EmployeeEntity employeeEntity = new EmployeeEntity();
@@ -91,6 +90,45 @@ public class EmployeeController {
                 savedEmployee.getPhone(),
                 savedEmployee.getDepartment().getName(),
                 savedEmployee.getRole().getTitle()
+        ));
+    }
+
+    @PutMapping("/{employeeId}")
+    public ResponseEntity<?> updateEmployee(@PathVariable int employeeId, @Valid @RequestBody EmployeeRequestDTO employeeRequestDTO) {
+        EmployeeEntity existingEmployee = employeeService.getEmployeeById(employeeId);
+        if (existingEmployee == null) {
+            return ResponseEntity.badRequest()
+                    .body(new ErrorResponseDTO(new Date(), "Employee with id " + employeeId + " not found"));
+        }
+
+        DepartmentEntity department = departmentService.getDepartmentByName(employeeRequestDTO.getDepartmentName());
+        if (department == null) {
+            return ResponseEntity.badRequest()
+                    .body(new ErrorResponseDTO(new Date(), "Department with name `" + employeeRequestDTO.getDepartmentName() + "` not found"));
+        }
+
+        RoleEntity role = roleService.getRoleByTitle(employeeRequestDTO.getRoleName());
+        if (role == null) {
+            return ResponseEntity.badRequest()
+                    .body(new ErrorResponseDTO(new Date(), "Role with name `" + employeeRequestDTO.getRoleName() + "` not found"));
+        }
+
+        existingEmployee.setFirstName(employeeRequestDTO.getFirstName());
+        existingEmployee.setLastName(employeeRequestDTO.getLastName());
+        existingEmployee.setEmail(employeeRequestDTO.getEmail());
+        existingEmployee.setPhone(employeeRequestDTO.getPhone());
+        existingEmployee.setDepartment(department);
+        existingEmployee.setRole(role);
+
+        EmployeeEntity updatedEmployee = employeeService.updateEmployee(existingEmployee);
+        return ResponseEntity.ok().body(new EmployeeResponseDTO(
+                updatedEmployee.getEmployeeId(),
+                updatedEmployee.getFirstName(),
+                updatedEmployee.getLastName(),
+                updatedEmployee.getEmail(),
+                updatedEmployee.getPhone(),
+                updatedEmployee.getDepartment().getName(),
+                updatedEmployee.getRole().getTitle()
         ));
     }
 }
